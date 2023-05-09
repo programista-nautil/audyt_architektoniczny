@@ -1,8 +1,16 @@
-import React, { useState } from 'react'
-import { View, Text, ScrollView, TouchableOpacity, Switch, Button, StyleSheet } from 'react-native'
-import { Stack, useRouter } from 'expo-router'
+//399573477414-o4q25m6hbabvgcvd65aag759o9071ndu.apps.googleusercontent.com
 
+import React, { useState, useEffect, useRef } from 'react'
+import { View, Text, ScrollView, TouchableOpacity, Switch, Button, StyleSheet, Linking, Image } from 'react-native'
+import { Stack, useRouter } from 'expo-router'
+import { Camera } from 'expo-camera'
+import * as MediaLibrary from 'expo-media-library'
 import axios from 'axios'
+import * as webBrowser from 'expo-web-browser'
+import * as Google from 'expo-auth-session/providers/google'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+
+webBrowser.maybeCompleteAuthSession()
 
 import styles from './1.style'
 import { COLORS, SIZES, icons, images } from '../../constants'
@@ -34,6 +42,10 @@ const elements = [
 ]
 
 const One = () => {
+	const [userInfo, setUserInfo] = React.useState(null)
+	const [request, response, promtAsync] = Google.useAuthRequest({
+		androidClientId: '399573477414-o4q25m6hbabvgcvd65aag759o9071ndu.apps.googleusercontent.com',
+	})
 	const [openSections, setOpenSections] = useState({})
 	const [switchValues, setSwitchValues] = useState(Array(elements.length).fill(false))
 	const [switchValuesContent, setSwitchValuesContent] = useState(
@@ -86,8 +98,75 @@ const One = () => {
 			})
 	}
 
+	const [isCameraVisible, setIsCameraVisible] = useState(false)
+	const [hasCameraPermission, setHasCameraPermission] = useState(false)
+	const [image, setImage] = useState(null)
+	const [type, setType] = useState(Camera.Constants.Type.back)
+	const [flash, setFlash] = useState(Camera.Constants.FlashMode.off)
+	const cameraRef = useRef(null)
+
+	useEffect(() => {
+		;(async () => {
+			MediaLibrary.requestPermissionsAsync()
+			const cameraStatus = await Camera.requestCameraPermissionsAsync()
+			setHasCameraPermission(cameraStatus.status === 'granted')
+		})()
+	}, [])
+
+	const takePicture = async () => {
+		if (cameraRef) {
+			try {
+				const data = await cameraRef.current.takePictureAsync()
+				console.log(data)
+				setImage(data.uri)
+
+				// Prześlij zdjęcie na Google Drive
+				if (token && data.uri) {
+					const asset = await MediaLibrary.createAssetAsync(data.uri)
+					console.log('saved successfully')
+					const assetInfo = await MediaLibrary.getAssetInfoAsync(asset)
+					console.log('Asset Info:', assetInfo)
+					uploadToGoogleDrive(assetInfo, token)
+				}
+			} catch (e) {
+				console.log(e)
+			}
+		}
+	}
+
+	const savePicture = async () => {
+		if (image) {
+			try {
+				const asset = await MediaLibrary.createAssetAsync(image)
+				alert('Picture saved! 🎉')
+				setImage(null)
+				console.log('saved successfully')
+				const assetInfo = await MediaLibrary.getAssetInfoAsync(asset)
+				console.log('Asset Info:', assetInfo)
+				// uploadToGoogleDrive(assetInfo, token)
+			} catch (error) {
+				console.log(error)
+			}
+		}
+	}
+
+	const getCameraPermission = async () => {
+		const permission = PermissionsAndroid.PERMISSIONS.CAMERA
+		const hasPermission = await PermissionsAndroid.check(permission)
+		if (hasPermission) {
+			return true
+		}
+
+		const status = await PermissionsAndroid.request(permission)
+		return status === 'granted'
+	}
+
+	const handleCameraButtonPress = () => {
+		setIsCameraVisible(!isCameraVisible)
+	}
+
 	return (
-		<ScrollView style={{ flex: 1, backgroundColor: COLORS.lightWhite, marginHorizontal: 10 }}>
+		<View style={{ flex: 1, backgroundColor: COLORS.lightWhite, marginHorizontal: 10 }}>
 			<Stack.Screen
 				options={{
 					headerStyle: { backgroundColor: COLORS.lightWhite },
@@ -95,6 +174,15 @@ const One = () => {
 					headerTitle: 'Powrót',
 				}}
 			/>
+			<View>
+				<Button
+					title='Sign in with Google'
+					disabled={!request}
+					onPress={() => {
+						promptAsync()
+					}}
+				/>
+			</View>
 			<View>
 				<Text style={styles.headerTitle}>1A. Otoczenie zewnętrzne przed wejściem do budynku</Text>
 			</View>
@@ -119,15 +207,60 @@ const One = () => {
 										/>
 									</View>
 								))}
+								<View>
+									<TouchableOpacity onPress={handleCameraButtonPress} style={styles.cameraButton}>
+										<Text style={styles.cameraButtonText}>Open Camera</Text>
+									</TouchableOpacity>
+
+									{isCameraVisible && (
+										<View style={styles.cameraContainer}>
+											{!image ? (
+												<Camera style={styles.camera} type={type} ref={cameraRef} flashMode={flash}>
+													<View style={styles.cameraButtons}>
+														<Button
+															title=''
+															icon='retweet'
+															onPress={() => {
+																setType(type === CameraType.back ? CameraType.front : CameraType.back)
+															}}
+														/>
+														<Button
+															title=''
+															onPress={() =>
+																setFlash(
+																	flash === Camera.Constants.FlashMode.off
+																		? Camera.Constants.FlashMode.on
+																		: Camera.Constants.FlashMode.off
+																)
+															}
+															icon='flash'
+															color={flash === Camera.Constants.FlashMode.off ? 'gray' : '#fff'}
+														/>
+													</View>
+												</Camera>
+											) : (
+												<Image source={{ uri: image }} style={styles.camera} />
+											)}
+											{!image ? (
+												<Button title='Take a picture' onPress={takePicture} icon='camera' />
+											) : (
+												<View style={styles.cameraButtons}>
+													<Button title='Re-take' onPress={() => setImage(null)} icon='retweet' />
+													<Button title='Save' onPress={savePicture} icon='check' />
+												</View>
+											)}
+										</View>
+									)}
+								</View>
 							</View>
 						)}
 					</TouchableOpacity>
 				))}
-				<TouchableOpacity onPress={handleSubmit} style={styles.submitButton}>
-					<Text style={styles.submitButtonText}>WYŚLIJ</Text>
-				</TouchableOpacity>
 			</View>
-		</ScrollView>
+			<TouchableOpacity onPress={handleSubmit} style={styles.submitButton}>
+				<Text style={styles.submitButtonText}>WYŚLIJ</Text>
+			</TouchableOpacity>
+		</View>
 	)
 }
 

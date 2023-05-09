@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "818784925145",
+    "project_id": "auditarch",
+    "storage_bucket": "auditarch.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:818784925145:android:3dc64c01d98cb09be255c8",
+        "android_client_info": {
+          "package_name": "com.daamian.ostatni"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "818784925145-94mclc8mn7iebtpbvek80eup3slubv75.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCsENPkQWrB7ZK-Pbprz33Trlsm077REAM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "818784925145-94mclc8mn7iebtpbvek80eup3slubv75.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -25,7 +25,7 @@ const Welcome = () => {
       </View>
 
       <View style={styles.tabsContainer}>
-        <FlatList />
+        
       </View>
     </View>
   )

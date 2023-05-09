@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { View, ScrollView, SafeAreaView, Text } from 'react-native'
 import { Stack, useRouter } from 'expo-router'
 
@@ -19,13 +19,13 @@ const Home = () => {
 					headerTitle: '',
 				}}
 			/>
-			<ScrollView showsVerticalScrollIndicator={false}>
+			
 				<View style={{ flex: 1, padding: SIZES.medium }}>
 					<Welcome />
 					<Popularjobs />
 					
 				</View>
-			</ScrollView>
+			
 		</SafeAreaView>
 	)
 }

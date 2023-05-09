@@ -54,6 +54,68 @@ const styles = StyleSheet.create({
 		fontWeight: 'bold',
 		color: COLORS.white,
 	},
+
+	cameraContainer: {
+		marginBottom: 20,
+	},
+	cameraButton: {
+		backgroundColor: 'blue',
+		paddingHorizontal: 10,
+		paddingVertical: 5,
+		borderRadius: 5,
+	},
+	cameraButtonText: {
+		color: 'white',
+	},
+	camera: {
+		height: 200,
+		marginBottom: 10,
+	},
+	cameraControls: {
+		backgroundColor: 'rgba(0, 0, 0, 0.5)',
+		paddingHorizontal: 20,
+		paddingVertical: 10,
+		borderRadius: 5,
+	},
+	cameraControlsText: {
+		color: 'white',
+	},
+	imagePreviewContainer: {
+		alignItems: 'center',
+		marginBottom: 10,
+	},
+	imagePreview: {
+		width: 200,
+		height: 200,
+		marginBottom: 10,
+	},
+	savePictureButton: {
+		backgroundColor: 'green',
+		paddingHorizontal: 10,
+		paddingVertical: 5,
+		borderRadius: 5,
+	},
+	savePictureButtonText: {
+		color: 'white',
+	},
+	choosePhotoButton: {
+		backgroundColor: 'orange',
+		paddingHorizontal: 10,
+		paddingVertical: 5,
+		borderRadius: 5,
+		marginBottom: 20,
+	},
+	choosePhotoButtonText: {
+		color: 'white',
+	},
+	userInfoContainer: {
+		alignItems: 'center',
+		marginBottom: 20,
+	},
+	userInfoText: {
+		fontSize: 16,
+		marginBottom: 10,
+	},
 })
 
 export default styles
