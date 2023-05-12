@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { View, ScrollView, SafeAreaView, Text } from 'react-native'
+import { View, ScrollView, SafeAreaView, Text, StyleSheet} from 'react-native'
 import { Stack, useRouter } from 'expo-router'
 
 import { COLORS, SIZES, icons, images } from '../constants'
@@ -31,3 +31,7 @@ const Home = () => {
 }
 
 export default Home
+
+const styles = StyleSheet.create({
+
+})

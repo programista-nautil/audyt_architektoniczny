@@ -7,10 +7,8 @@ import { Camera } from 'expo-camera'
 import * as MediaLibrary from 'expo-media-library'
 import axios from 'axios'
 import * as webBrowser from 'expo-web-browser'
-import * as Google from 'expo-auth-session/providers/google'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-
-webBrowser.maybeCompleteAuthSession()
+// import * as Google from 'expo-auth-session/providers/google'
+// import AsyncStorage from '@react-native-async-storage/async-storage'
 
 import styles from './1.style'
 import { COLORS, SIZES, icons, images } from '../../constants'
@@ -42,10 +40,10 @@ const elements = [
 ]
 
 const One = () => {
-	const [userInfo, setUserInfo] = React.useState(null)
-	const [request, response, promtAsync] = Google.useAuthRequest({
-		androidClientId: '399573477414-o4q25m6hbabvgcvd65aag759o9071ndu.apps.googleusercontent.com',
-	})
+	// const [userInfo, setUserInfo] = React.useState(null)
+	// const [request, response, promtAsync] = Google.useAuthRequest({
+	// 	androidClientId: '399573477414-o4q25m6hbabvgcvd65aag759o9071ndu.apps.googleusercontent.com',
+	// })
 	const [openSections, setOpenSections] = useState({})
 	const [switchValues, setSwitchValues] = useState(Array(elements.length).fill(false))
 	const [switchValuesContent, setSwitchValuesContent] = useState(
@@ -98,7 +96,7 @@ const One = () => {
 			})
 	}
 
-	const [isCameraVisible, setIsCameraVisible] = useState(false)
+	const [isCameraVisible, setIsCameraVisible] = useState({})
 	const [hasCameraPermission, setHasCameraPermission] = useState(false)
 	const [image, setImage] = useState(null)
 	const [type, setType] = useState(Camera.Constants.Type.back)
@@ -161,8 +159,11 @@ const One = () => {
 		return status === 'granted'
 	}
 
-	const handleCameraButtonPress = () => {
-		setIsCameraVisible(!isCameraVisible)
+	const handleCameraButtonPress = index => {
+		setIsCameraVisible(prevState => ({
+			...prevState,
+			[index]: !prevState[index],
+		}))
 	}
 
 	return (
@@ -175,19 +176,10 @@ const One = () => {
 				}}
 			/>
 			<View>
-				<Button
-					title='Sign in with Google'
-					disabled={!request}
-					onPress={() => {
-						promptAsync()
-					}}
-				/>
-			</View>
-			<View>
 				<Text style={styles.headerTitle}>1A. Otoczenie zewnętrzne przed wejściem do budynku</Text>
 			</View>
 
-			<View style={styles.container}>
+			<ScrollView style={styles.container}>
 				{elements.map((element, index) => (
 					<TouchableOpacity key={index} onPress={() => handleToggle(index)}>
 						<View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -208,11 +200,11 @@ const One = () => {
 									</View>
 								))}
 								<View>
-									<TouchableOpacity onPress={handleCameraButtonPress} style={styles.cameraButton}>
+									<TouchableOpacity onPress={() => handleCameraButtonPress(index)} style={styles.cameraButton}>
 										<Text style={styles.cameraButtonText}>Open Camera</Text>
 									</TouchableOpacity>
 
-									{isCameraVisible && (
+									{isCameraVisible[index] && (
 										<View style={styles.cameraContainer}>
 											{!image ? (
 												<Camera style={styles.camera} type={type} ref={cameraRef} flashMode={flash}>
@@ -221,7 +213,11 @@ const One = () => {
 															title=''
 															icon='retweet'
 															onPress={() => {
-																setType(type === CameraType.back ? CameraType.front : CameraType.back)
+																setType(
+																	type === Camera.Constants.Type.back
+																		? Camera.Constants.Type.front
+																		: Camera.Constants.Type.back
+																)
 															}}
 														/>
 														<Button
@@ -242,7 +238,7 @@ const One = () => {
 												<Image source={{ uri: image }} style={styles.camera} />
 											)}
 											{!image ? (
-												<Button title='Take a picture' onPress={takePicture} icon='camera' />
+												<Button title='Take a picture' onPress={() => takePicture(index)} icon='camera' />
 											) : (
 												<View style={styles.cameraButtons}>
 													<Button title='Re-take' onPress={() => setImage(null)} icon='retweet' />
@@ -256,12 +252,101 @@ const One = () => {
 						)}
 					</TouchableOpacity>
 				))}
-			</View>
+			</ScrollView>
 			<TouchableOpacity onPress={handleSubmit} style={styles.submitButton}>
 				<Text style={styles.submitButtonText}>WYŚLIJ</Text>
 			</TouchableOpacity>
 		</View>
 	)
+
+	// return (
+	// 	<View style={{ flex: 1, backgroundColor: COLORS.lightWhite, marginHorizontal: 10 }}>
+	// 		<Stack.Screen
+	// 			options={{
+	// 				headerStyle: { backgroundColor: COLORS.lightWhite },
+	// 				headerShadowVisible: false,
+	// 				headerTitle: 'Powrót',
+	// 			}}
+	// 		/>
+	// 		<View>
+	// 			<Text style={styles.headerTitle}>1A. Otoczenie zewnętrzne przed wejściem do budynku</Text>
+	// 		</View>
+
+	// 		<ScrollView style={styles.container}>
+	// 			{elements.map((element, index) => (
+	// 				<TouchableOpacity key={index} onPress={() => handleToggle(index)}>
+	// 					<View style={{ flexDirection: 'row', alignItems: 'center' }}>
+	// 						<Text style={{ flex: 1, fontSize: 16, color: COLORS.tertiary }}>{element.name}</Text>
+	// 						<Switch value={openSections[index]} onValueChange={() => handleToggle(index)} />
+	// 					</View>
+	// 					{openSections[index] && (
+	// 						<View style={{ backgroundColor: COLORS.gray2 }}>
+	// 							{element.content.map((content, contentIndex) => (
+	// 								<View
+	// 									key={contentIndex}
+	// 									style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+	// 									<Text style={[styles.tabText, { flex: 1 }]}>{content}</Text>
+	// 									<Switch
+	// 										value={switchValuesContent[index][contentIndex]}
+	// 										onValueChange={value => handleSwitchContent(index, contentIndex, value)}
+	// 									/>
+	// 								</View>
+	// 							))}
+	// 							<View>
+	// 								<TouchableOpacity onPress={handleCameraButtonPress} style={styles.cameraButton}>
+	// 									<Text style={styles.cameraButtonText}>Open Camera</Text>
+	// 								</TouchableOpacity>
+
+	// 								{isCameraVisible && (
+	// 									<View style={styles.cameraContainer}>
+	// 										{!image ? (
+	// 											<Camera style={styles.camera} type={type} ref={cameraRef} flashMode={flash}>
+	// 												<View style={styles.cameraButtons}>
+	// 													<Button
+	// 														title=''
+	// 														icon='retweet'
+	// 														onPress={() => {
+	// 															setType(type === CameraType.back ? CameraType.front : CameraType.back)
+	// 														}}
+	// 													/>
+	// 													<Button
+	// 														title=''
+	// 														onPress={() =>
+	// 															setFlash(
+	// 																flash === Camera.Constants.FlashMode.off
+	// 																	? Camera.Constants.FlashMode.on
+	// 																	: Camera.Constants.FlashMode.off
+	// 															)
+	// 														}
+	// 														icon='flash'
+	// 														color={flash === Camera.Constants.FlashMode.off ? 'gray' : '#fff'}
+	// 													/>
+	// 												</View>
+	// 											</Camera>
+	// 										) : (
+	// 											<Image source={{ uri: image }} style={styles.camera} />
+	// 										)}
+	// 										{!image ? (
+	// 											<Button title='Take a picture' onPress={takePicture} icon='camera' />
+	// 										) : (
+	// 											<View style={styles.cameraButtons}>
+	// 												<Button title='Re-take' onPress={() => setImage(null)} icon='retweet' />
+	// 												<Button title='Save' onPress={savePicture} icon='check' />
+	// 											</View>
+	// 										)}
+	// 									</View>
+	// 								)}
+	// 							</View>
+	// 						</View>
+	// 					)}
+	// 				</TouchableOpacity>
+	// 			))}
+	// 		</ScrollView>
+	// 		<TouchableOpacity onPress={handleSubmit} style={styles.submitButton}>
+	// 			<Text style={styles.submitButtonText}>WYŚLIJ</Text>
+	// 		</TouchableOpacity>
+	// 	</View>
+	// )
 }
 
 export default One
