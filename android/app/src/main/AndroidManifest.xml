@@ -30,6 +30,8 @@
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="acme"/>
         <data android:scheme="com.daamian.ostatni"/>
+        <data android:scheme="com.daamian.ostatni"/>
+        <data android:scheme="exp+ostatni"/>
       </intent-filter>
     </activity>
     <activity android:name="com.facebook.react.devsupport.DevSettingsActivity" android:exported="false"/>
