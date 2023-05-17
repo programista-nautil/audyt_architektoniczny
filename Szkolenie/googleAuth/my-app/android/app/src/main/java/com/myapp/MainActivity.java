@@ -1,4 +1,4 @@
-package com.daamian.ostatni;
+package com.myapp;
 
 import android.os.Build;
 import android.os.Bundle;
@@ -7,7 +7,6 @@ import com.facebook.react.ReactActivity;
 import com.facebook.react.ReactActivityDelegate;
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint;
 import com.facebook.react.defaults.DefaultReactActivityDelegate;
-import com.rnfs.RNFSPackage;
 
 import expo.modules.ReactActivityDelegateWrapper;
 

@@ -1,4 +1,5 @@
 //399573477414-o4q25m6hbabvgcvd65aag759o9071ndu.apps.googleusercontent.com
+global.Buffer = global.Buffer || require('readable-stream').Buffer;
 
 import React, { useState, useEffect, useRef } from 'react'
 import { View, Text, ScrollView, TouchableOpacity, Switch, Button, StyleSheet, Linking, Image } from 'react-native'
@@ -10,8 +11,8 @@ import * as webBrowser from 'expo-web-browser'
 import auth from '@react-native-firebase/auth'
 import * as Google from 'expo-auth-session/providers/google'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import RNFS from 'react-native-fs';
-
+import { google } from 'googleapis';
+import RNFetchBlob from 'rn-fetch-blob';
 
 import styles from './1.style'
 import { COLORS, SIZES, icons, images } from '../../constants'
@@ -160,22 +161,31 @@ const One = () => {
 		console.log({ user: user }) // Zmiana userInfo na user
 	}
 
-	const test = async () => {
+	const test = async fileUri => {
 		try {
 			// Zmień 'ID_Folderu' na właściwe ID folderu
+			const folderId = '1AF-FZqNgiIQAaBecq5Z8WBBp1vO8WkvS'
+			const apiUrl = `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&parents=${folderId}`;
+			console.log(fileUri)
 
-			const childrenResponse = await axios.get('https://www.googleapis.com/drive/v3/files', {
-				params: {
-					folderId: `${folderId}`,
-					spaces: 'drive',
-				},
-				headers: {
-					authorization: `Bearer ${accessToken}`,
-				},
+			const formData = new FormData()
+			formData.append('photo', {
+				uri: fileUri,
+				type: 'image/jpeg',
+				name: 'nazwa_zdjecia.jpg',
 			})
-			console.log('Dzieci folderu:', childrenResponse.data.files)
+
+			const response = await axios.post(apiUrl, formData, {
+				headers: {
+					Authorization: `Bearer ${accessToken}`,
+					'Content-Type': 'multipart/form-data',
+				},
+			});
+
+			console.log('Plik wysłany na Dysk Google:', response.data)
 		} catch (error) {
-			console.log('Błąd:', error)
+			console.log('Response', response)
+			console.log('Błąd podczas wysyłania pliku:', error)
 		}
 	}
 
@@ -258,7 +268,7 @@ const One = () => {
 				const assetInfo = await MediaLibrary.getAssetInfoAsync(asset)
 				console.log('Asset Info URI:', assetInfo.uri)
 
-				test()
+				test(assetInfo.uri)
 				//uploadToGoogleDrive(assetInfo.uri, accessToken, folderId)
 			} catch (error) {
 				console.log(error)

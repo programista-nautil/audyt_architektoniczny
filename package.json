@@ -29,6 +29,7 @@
     "expo-status-bar": "~1.4.2",
     "expo-web-browser": "^12.1.1",
     "googleapis": "^118.0.0",
+    "googleapis-common": "^6.0.4",
     "install": "^0.13.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
@@ -43,6 +44,8 @@
     "react-native-vision-camera": "^2.15.4",
     "react-native-web": "~0.18.7",
     "react-native-windows": "^0.71.12",
+    "readable-stream": "^4.4.0",
+    "rn-fetch-blob": "^0.12.0",
     "window-plugin": "^1.0.4"
   },
   "devDependencies": {
