@@ -2,11 +2,11 @@ let url = 'https://docs.google.com/spreadsheets/d/1ttdyySavO0xv94NQ_7phpT0csOJHY
 let ss = SpreadsheetApp.openByUrl(url) // Please set the Spreadsheet ID.
 let sheetDane = ss.getSheetByName('0. Podstawowe dane')
 const sheetDaneValues = sheetDane.getDataRange().getValues()
+const first = ss.getSheetByName('1. Otoczenie zewnętrzne')
 // let folder = DriveApp.getFolderById('1i1WCRMXzTRRoFHU3aP-MY1NBSFwoUR0v') //dev
 let folder = DriveApp.getFolderById('1P5uDoECsl3Aj8l_BWLmUdjEFXw8Ie6i0') //production
 const imgs = DriveApp.getFolderById('1AF-FZqNgiIQAaBecq5Z8WBBp1vO8WkvS')
 
-Logger.log(sheetDaneValues)
 var date = new Date()
 var dateString = date.toISOString().split('T')[0]
 const zamawiajacy = sheetDaneValues[1][1]
@@ -20,6 +20,9 @@ const header = fileDocOpen.getHeader()
 
 const start = () => {
 	copyDataCompanyAudit()
+	tableCopy(1, 1, first.getLastRow(), 4)
+	categoryCopy()
+	fileDocOpen.saveAndClose()
 }
 
 function onOpen() {
@@ -46,7 +49,6 @@ const copyDataCompanyAudit = () => {
 		'{{opisKondygnacje}}': sheetDaneValues[10][1],
 		'{{powierzchnia}}': sheetDaneValues[11][1],
 	}
-	Logger.log(values)
 
 	for (const [placeholder, value] of Object.entries(values)) {
 		body.replaceText(placeholder, value)
@@ -59,34 +61,87 @@ const copyDataCompanyAudit = () => {
 const tableCopy = (r, c, nr, nc, x) => {
 	// przekopiowanie ze stylami tabeli KS do DOC
 
-	let rangeTable = sheet.getRange(r, c, nr, nc)
+	let rangeTable = first.getRange(r, c, nr, nc)
 	let valuesTable = rangeTable.getValues()
 
 	let stylesTable = rangeTable.getTextStyles()
 	let backgroundColorss = rangeTable.getBackgrounds()
 
-	const range = body.findText('Wykaz adresów URL stron/ekranów')
+	const range = body.findText('{{wynikiOceny2}}')
+	let textElement = range.getElement()
 
-	if (x === true) {
-		// miejsce w którym ma sie dodać tabela
-		let ele = range.getElement()
-		if (ele.getParent().getParent().getType() === DocumentApp.ElementType.BODY_SECTION) {
-			var offset = body.getChildIndex(ele.getParent())
-			body.insertTable(offset + 1, valuesTable)
-		}
-	} else {
-		let table = body.appendTable(valuesTable)
-		table.setBorderWidth(0.5)
+	if (textElement) {
+		let paragraph = textElement.getParent()
+		let parent = paragraph.getParent()
+		if (parent.getType() === DocumentApp.ElementType.BODY_SECTION) {
+			let offset = parent.getChildIndex(paragraph)
+			let table = parent.insertTable(offset + 1, valuesTable)
+			table.setBorderWidth(0.5)
 
-		for (let i = 0; i < table.getNumRows(); i++) {
-			for (let j = 0; j < table.getRow(i).getNumCells(); j++) {
-				let obj = {
-					[DocumentApp.Attribute.BACKGROUND_COLOR]: backgroundColorss[i][j],
-					[DocumentApp.Attribute.FONT_SIZE]: stylesTable[i][j].getFontSize(),
-					[DocumentApp.Attribute.BOLD]: stylesTable[i][j].isBold(),
+			for (let i = 0; i < table.getNumRows(); i++) {
+				for (let j = 0; j < table.getRow(i).getNumCells(); j++) {
+					let obj = {
+						[DocumentApp.Attribute.BACKGROUND_COLOR]: backgroundColorss[i][j],
+						[DocumentApp.Attribute.FONT_SIZE]: stylesTable[i][j].getFontSize(),
+						[DocumentApp.Attribute.BOLD]: stylesTable[i][j].isBold(),
+					}
+					table.getRow(i).getCell(j).setAttributes(obj)
 				}
-				table.getRow(i).getCell(j).setAttributes(obj)
 			}
+		}
+	}
+}
+
+//Kopiowanie tablicy z kryteriami sukcesu i opisami
+const categoryCopy = () => {
+	let rangeTable = first.getRange(4, 6, first.getLastRow(), 11).getValues()
+
+	for (let row of rangeTable) {
+		if (row[0] !== '') {
+			let kategoria = row[0]
+			let rodzaj = row[2]
+			let czas = row[8]
+			let kryterium = row[3]
+			let kosztownosc = row[7]
+			let zalecenia = row[5]
+			let ikona1 = row[3]
+			let ikona2 = row[4]
+			let ikona3 = row[5]
+			let ikona4 = row[6]
+			let zdjecie = row[9]
+
+			body.appendHorizontalRule()
+			body.appendParagraph(kategoria).setHeading(DocumentApp.ParagraphHeading.HEADING2)
+			body.appendHorizontalRule()
+			if (ikona1 === true) {
+				// Wstaw zdjęcie do dokumentu
+				let imageBlob = imageFile.getBlob()
+				let image = body.appendImage(imageBlob)
+
+				// Ustaw rozmiar zdjęcia
+				image.setHeight(200)
+				image.setWidth(200) // Zastąp 'Ikona1' odpowiednią nazwą ikony
+			}
+
+			if (ikona2 === true) {
+				iconsToAdd.push('Ikona2') // Zastąp 'Ikona2' odpowiednią nazwą ikony
+			}
+
+			if (ikona3 === true) {
+				iconsToAdd.push('Ikona3') // Zastąp 'Ikona3' odpowiednią nazwą ikony
+			}
+
+			if (ikona4 === true) {
+				iconsToAdd.push('Ikona4') // Zastąp 'Ikona4' odpowiednią nazwą ikony
+			}
+			body.appendParagraph('Rodzaj: ' + rodzaj).setHeading(DocumentApp.ParagraphHeading.HEADING3)
+			body
+				.appendParagraph('Czas potrzebny na spełnienie kryterium: ' + czas)
+				.setHeading(DocumentApp.ParagraphHeading.HEADING3)
+			body.appendParagraph('Kosztowność: ' + kosztownosc).setHeading(DocumentApp.ParagraphHeading.HEADING3)
+			body.appendHorizontalRule()
+			body.appendParagraph('Zalecenia: ' + zalecenia).setHeading(DocumentApp.ParagraphHeading.HEADING3)
+			body.appendParagraph('Zdjęcie')
 		}
 	}
 }
