@@ -101,7 +101,6 @@ const categoryCopy = () => {
 			let kategoria = row[0]
 			let rodzaj = row[2]
 			let czas = row[8]
-			let kryterium = row[3]
 			let kosztownosc = row[7]
 			let zalecenia = row[5]
 			let ikona1 = row[3]
@@ -110,30 +109,48 @@ const categoryCopy = () => {
 			let ikona4 = row[6]
 			let zdjecie = row[9]
 
+			const nazwaIkon = ['1.png', '2.png', '3.png', '4.png']
+
 			body.appendHorizontalRule()
 			body.appendParagraph(kategoria).setHeading(DocumentApp.ParagraphHeading.HEADING2)
 			body.appendHorizontalRule()
-			if (ikona1 === true) {
-				// Wstaw zdjęcie do dokumentu
-				let imageBlob = imageFile.getBlob()
-				let image = body.appendImage(imageBlob)
 
-				// Ustaw rozmiar zdjęcia
-				image.setHeight(200)
-				image.setWidth(200) // Zastąp 'Ikona1' odpowiednią nazwą ikony
+			if (ikona1 === true) {
+				// Wstaw ikonę 1 do dokumentu
+				let imageFile = imgs.getFilesByName(nazwaIkon[0])
+				if (imageFile.hasNext()) {
+					let imageBlob = imageFile.next().getBlob()
+					let image = body.appendImage(imageBlob)
+				}
 			}
 
 			if (ikona2 === true) {
-				iconsToAdd.push('Ikona2') // Zastąp 'Ikona2' odpowiednią nazwą ikony
+				// Wstaw ikonę 2 do dokumentu
+				let imageFile = imgs.getFilesByName(nazwaIkon[1])
+				if (imageFile.hasNext()) {
+					let imageBlob = imageFile.next().getBlob()
+					let image = body.appendImage(imageBlob)
+				}
 			}
 
 			if (ikona3 === true) {
-				iconsToAdd.push('Ikona3') // Zastąp 'Ikona3' odpowiednią nazwą ikony
+				// Wstaw ikonę 3 do dokumentu
+				let imageFile = imgs.getFilesByName(nazwaIkon[2])
+				if (imageFile.hasNext()) {
+					let imageBlob = imageFile.next().getBlob()
+					let image = body.appendImage(imageBlob)
+				}
 			}
 
 			if (ikona4 === true) {
-				iconsToAdd.push('Ikona4') // Zastąp 'Ikona4' odpowiednią nazwą ikony
+				// Wstaw ikonę 4 do dokumentu
+				let imageFile = imgs.getFilesByName(nazwaIkon[3])
+				if (imageFile.hasNext()) {
+					let imageBlob = imageFile.next().getBlob()
+					let image = body.appendImage(imageBlob)
+				}
 			}
+
 			body.appendParagraph('Rodzaj: ' + rodzaj).setHeading(DocumentApp.ParagraphHeading.HEADING3)
 			body
 				.appendParagraph('Czas potrzebny na spełnienie kryterium: ' + czas)
