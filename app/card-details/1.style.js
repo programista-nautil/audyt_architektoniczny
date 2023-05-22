@@ -116,6 +116,22 @@ const styles = StyleSheet.create({
 		fontSize: 16,
 		marginBottom: 10,
 	},
+	stateButton: {
+		width: 50,
+		height: 40,
+		borderRadius: 20,
+		alignItems: 'center',
+		justifyContent: 'center',
+		textAlign: 'center',
+		backgroundColor: COLORS.lightGray,
+		marginRight: 10,
+	},
+	stateButtonContainer: {
+		paddingVertical: 30,
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
 })
 
 export default styles

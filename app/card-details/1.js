@@ -1,6 +1,3 @@
-//399573477414-o4q25m6hbabvgcvd65aag759o9071ndu.apps.googleusercontent.com
-global.Buffer = global.Buffer || require('readable-stream').Buffer;
-
 import React, { useState, useEffect, useRef } from 'react'
 import { View, Text, ScrollView, TouchableOpacity, Switch, Button, StyleSheet, Linking, Image } from 'react-native'
 import { Stack, useRouter } from 'expo-router'
@@ -11,9 +8,7 @@ import * as webBrowser from 'expo-web-browser'
 import auth from '@react-native-firebase/auth'
 import * as Google from 'expo-auth-session/providers/google'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { google } from 'googleapis';
-import RNFetchBlob from 'rn-fetch-blob';
-
+import { GDrive, MimeTypes, GoogleDriveApi, GoogleSignin } from '@robinbobin/react-native-google-drive-api-wrapper'
 import styles from './1.style'
 import { COLORS, SIZES, icons, images } from '../../constants'
 
@@ -21,22 +16,42 @@ webBrowser.maybeCompleteAuthSession()
 
 const elements = [
 	{
-		name: 'TRASA DOJŚCIA DO BUDYNKU',
-		content: ['Brak słupków zawężających trasę'],
+		name: 'CIĄGI KOMUNIKACYJNE',
+		content: [
+			'Brak nierównego chodnika, wysokich krawężników i przeszkód',
+			'Kontrastowe i antypoślizgowe materiały wykończeniowe ułatwiające orientację i poruszanie się',
+			'Wyposażenie, miejsca odpoczynku, siedzenia i elementy małej architektury znajdują się poza szerokością 1,8 m (główna trasa dojścia do budynku)',
+			'Minimalna szerokość ciągi komunikacyjne: 150 cm (oddzielone od jezdni) 200 cm (przy jezdni)',
+			'W ciągach pieszych o szerokości poniżej 180 cm i długości powyżej 50 m  miejsca mijania o długości 200 cm i szerokości 180 cm co 25 m',
+			'Ścieżki rowerowe wyraźnie oddzielone od chodnika',
+			'Podkreślenie głównych ciągów komunikacyjnych za pomocą faktury materiału, zastosowanie ścieżek dotykowych',
+		],
 	},
 	{
-		name: 'WYPOSAŻENIE NA TRASIE DOJŚCIA',
+		name: 'SCHODY ZEWNĘTRZNE',
 		content: [
-			'Trasa dojścia do budynku wolna od przeszkód',
-			'Wyposażenie i elementy małej architektury znajdują się poza szerokością 1,8 m trasy dojścia do budynku',
+			'Ilość stopni w jednym biegu poniżej 10',
+			'Szerokość: biegu 1,2 m, spocznika 1,5 m',
+			'Głębokość stopni min. 35 cm, wysokość stopni max. 17,5 cm',
+			'Powierzchnie spoczników schodów mają wykończenie wyróżniające je odcieniem, barwą bądź fakturą, min. w pasie 30 cm od krawędzi rozpoczynającej i kończącej bieg schodów',
+		],
+	},
+	{
+		name: 'WYPOSAŻENIE ZEWNĘTRZNE',
+		content: [
+			'Ławki wyposażone w oparcia i podłokietniki (przynajmniej 1/3 miejsc siedzących)',
+			'Zapewniono miejsca postojowe dla rowerów',
 		],
 	},
 	{
 		name: 'OZNACZENIA I TABLICE INFORMACYJNE',
-		content: ['Czytelne tablice informacyjne w języku symbolicznym lub obrazkowym'],
+		content: [
+			'Czytelne oznaczenia w języku symbolicznym lub obrazkowym',
+			'Czytelne tablice informacyjne w języku symbolicznym lub obrazkowym',
+		],
 	},
 	{
-		name: 'OŚWIETLENIE',
+		name: 'OŚWIETLENIE ZEWNĘTRZNE',
 		content: [
 			'Trasa dojścia do budynku jest dobrze oświetlona',
 			'Rozstaw opraw oświetleniowych umożliwia równomierną dystrybucję światła',
@@ -46,6 +61,8 @@ const elements = [
 ]
 
 const One = () => {
+	const gdrive = new GDrive()
+
 	const [openSections, setOpenSections] = useState({})
 	const [switchValues, setSwitchValues] = useState(Array(elements.length).fill(false))
 	const [switchValuesContent, setSwitchValuesContent] = useState(
@@ -74,20 +91,42 @@ const One = () => {
 	}
 
 	const handleSubmit = () => {
-		const data = {
-			switchValues,
-			elements: elements.map((element, index) => ({
+		const updatedElements = elements.map((element, index) => {
+			const updatedContent = element.content.map((text, contentIndex) => {
+				const state = switchValuesContent[index][contentIndex]
+				let updatedText = text
+
+				if (state === 'Tak' || state === 'Nie' || state === 'Nie dotyczy') {
+					const lowercaseState = state.toLowerCase()
+					const pattern = new RegExp(`\\b${state}\\b`, 'gi')
+					updatedText = updatedText.replace(pattern, lowercaseState)
+				}
+
+				return {
+					text: updatedText,
+					state: state,
+				}
+			})
+
+			return {
 				...element,
 				isOpen: !!openSections[index],
-				switchValuesContent: switchValuesContent[index],
-			})),
+				content: updatedContent,
+			}
+		})
+
+		const switchValuesFormatted = switchValues.map(value => (value ? 'Tak' : 'Nie'))
+
+		const data = {
+			switchValues: switchValuesFormatted,
+			elements: updatedElements,
 		}
 
 		console.log('Dane do wysłania:', JSON.stringify(data, null, 2))
 
 		axios
 			.post(
-				'https://script.google.com/macros/s/AKfycbybdRctsWgIVvDK7bkc4pleMMZfkK829xsJNIVoC_hqnnSIO-8ATYi4gu_T6P2Da_e1/exec',
+				'https://script.google.com/macros/s/AKfycbw4w8NIpmIbreIvYhVIM20VVNHaJP3RlJIQHSGIu-fDS4Ib60tRIELpxxHPAxAAXTFhxg/exec',
 				data
 			)
 			.then(response => {
@@ -103,6 +142,7 @@ const One = () => {
 	const [image, setImage] = useState(null)
 	const [type, setType] = useState(Camera.Constants.Type.back)
 	const [flash, setFlash] = useState(Camera.Constants.FlashMode.off)
+	const [imageUri, setImageUri] = useState(null)
 	const cameraRef = useRef(null)
 
 	const scopes = ['https://www.googleapis.com/auth/drive']
@@ -132,11 +172,15 @@ const One = () => {
 		if (response?.type === 'success') {
 			setAccessToken(response.authentication.accessToken)
 			accessToken && fetchUserInfo()
+			gdrive.accessToken = response.authentication.accessToken
+			console.log({ responseToken: response.authentication.accessToken })
+			console.log(gdrive.files.list())
 		}
 	}, [response, accessToken])
 
-	const accessTokenImage = accessToken // Zmień 'twój_token_dostępu' na właściwy token dostępu
-	const folderId = '1AF-FZqNgiIQAaBecq5Z8WBBp1vO8WkvS' // Zmień '1AF-FZqNgiIQAaBecq5Z8WBBp1vO8WkvS' na właściwe ID folderu
+	const accessTokenImage = accessToken
+
+	const folderId = '1AF-FZqNgiIQAaBecq5Z8WBBp1vO8WkvS'
 
 	const ShowUserInfo = () => {
 		if (user) {
@@ -157,85 +201,38 @@ const One = () => {
 			headers: { Authorization: `Bearer ${accessToken}` },
 		})
 		let user = await response.json()
-		setUserInfo(user) // Zmiana userInfo na user
-		console.log({ user: user }) // Zmiana userInfo na user
+		setUserInfo(user)
+		console.log({ user: user })
 	}
 
 	const test = async fileUri => {
 		try {
-			// Zmień 'ID_Folderu' na właściwe ID folderu
+			console.log({ accessToken: accessTokenImage })
+
+			const apiUrl = `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`
 			const folderId = '1AF-FZqNgiIQAaBecq5Z8WBBp1vO8WkvS'
-			const apiUrl = `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&parents=${folderId}`;
-			console.log(fileUri)
+			const fileName = 'testowy_plik.jpg'
+			const mimeType = 'image/jpeg'
 
 			const formData = new FormData()
-			formData.append('photo', {
-				uri: fileUri,
-				type: 'image/jpeg',
-				name: 'nazwa_zdjecia.jpg',
-			})
+			formData.append('metadata', JSON.stringify({ name: 'testowy_plik.jpg', mimeType }))
+			formData.append('file', { uri: fileUri, type: mimeType, name: 'testowy_plik.jpg' })
 
-			const response = await axios.post(apiUrl, formData, {
-				headers: {
-					Authorization: `Bearer ${accessToken}`,
-					'Content-Type': 'multipart/form-data',
-				},
-			});
-
-			console.log('Plik wysłany na Dysk Google:', response.data)
-		} catch (error) {
-			console.log('Response', response)
-			console.log('Błąd podczas wysyłania pliku:', error)
-		}
-	}
-
-	const uploadToGoogleDrive = async (imageUri, accessToken) => {
-		try {
-			const url = 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart'
-
-			const headers = {
-				Authorization: `Bearer ${accessToken}`,
-				'Content-Type': 'multipart/related',
-				'Content-Type': 'image/jpeg', // Dodaj ten nagłówek
-			}
-
-			const metadata = {
-				name: 'nazwa_zdjecia.jpg', // Zastąp 'nazwa_zdjecia' właściwą nazwą pliku
+			const response = await gdrive.files.createFile({
+				name: fileName,
+				mimeType: mimeType,
 				parents: [folderId],
-			}
-
-			const fileData = new FormData()
-			fileData.append('metadata', JSON.stringify(metadata))
-			fileData.append('file', {
-				uri: imageUri,
-				type: 'image/jpeg', // Ustaw poprawny typ zawartości dla pliku obrazu
-				name: 'nazwa_zdjecia.jpg', // Zastąp 'nazwa_zdjecia' właściwą nazwą pliku
-			})
-
-			const response = await axios.post(url, fileData, { headers })
-
-			console.log('URL z dysku Google:', response.data.webViewLink)
-		} catch (error) {
-			console.error('Błąd podczas przesyłania zdjęcia:', error)
-			// Wyświetl szczegółowe informacje o błędzie
-			console.log('Error response:', error.response)
-		}
-	}
-
-	const fileUri = 'file:///storage/emulated/0/DCIM/2279726f-bbed-4e35-bc70-55a3dbb9e83f.jpg'
-
-	const fetchFilesFromFolder = async (folderId, accessToken) => {
-		try {
-			console.log({ accessToken_fetchfiles: accessToken })
-			const response = await axios.get(`https://www.googleapis.com/drive/v3/files`, {
-				headers: {
-					Authorization: `Bearer ${accessToken}`,
+				media: {
+					mimeType: mimeType,
+					body: {
+						fileUri: fileUri,
+					},
 				},
 			})
 
-			//console.log('Pliki w folderze:', response)
+			console.log('Plik wysłany na Dysk Google:', response)
 		} catch (error) {
-			console.log('Błąd odczytu plików:', error)
+			console.log('Błąd:', error.response.data)
 		}
 	}
 
@@ -245,7 +242,6 @@ const One = () => {
 				const data = await cameraRef.current.takePictureAsync()
 				setImage(data.uri)
 
-				// Prześlij zdjęcie na Google Drive
 				if (token && data.uri) {
 					const asset = await MediaLibrary.createAssetAsync(data.uri)
 					console.log('saved successfully')
@@ -266,10 +262,11 @@ const One = () => {
 				setImage(null)
 				console.log('saved successfully')
 				const assetInfo = await MediaLibrary.getAssetInfoAsync(asset)
-				console.log('Asset Info URI:', assetInfo.uri)
 
+				console.log('Przesyłam zdjęcie na Dysk Google - assetInfo.uri:', assetInfo.uri)
+				await _initGoogleDrive()
+				console.log(await _initGoogleDrive())
 				test(assetInfo.uri)
-				//uploadToGoogleDrive(assetInfo.uri, accessToken, folderId)
 			} catch (error) {
 				console.log(error)
 			}
@@ -296,24 +293,6 @@ const One = () => {
 
 	return (
 		<View style={{ flex: 1, backgroundColor: COLORS.lightWhite, marginHorizontal: 10 }}>
-			<Stack.Screen
-				options={{
-					headerStyle: { backgroundColor: COLORS.lightWhite },
-					headerShadowVisible: false,
-					headerTitle: 'Powrót',
-				}}
-			/>
-			<View>
-				<Button
-					title='Sign in with Google'
-					disabled={!request}
-					onPress={() => {
-						promptAsync()
-					}}
-				/>
-				<Text style={styles.headerTitle}>1A. Otoczenie zewnętrzne przed wejściem do budynku</Text>
-			</View>
-
 			<ScrollView style={styles.container}>
 				{elements.map((element, index) => (
 					<TouchableOpacity key={index} onPress={() => handleToggle(index)}>
@@ -326,12 +305,60 @@ const One = () => {
 								{element.content.map((content, contentIndex) => (
 									<View
 										key={contentIndex}
-										style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+										style={{
+											flexDirection: 'row',
+											alignItems: 'center',
+											justifyContent: 'space-between',
+											backgroundColor: contentIndex % 2 === 1 ? COLORS.lightGray : COLORS.white,
+										}}>
 										<Text style={[styles.tabText, { flex: 1 }]}>{content}</Text>
-										<Switch
-											value={switchValuesContent[index][contentIndex]}
-											onValueChange={value => handleSwitchContent(index, contentIndex, value)}
-										/>
+										<View style={styles.stateButtonContainer}>
+											<TouchableOpacity
+												style={[
+													styles.stateButton,
+													switchValuesContent[index][contentIndex] === 'Tak' && { backgroundColor: COLORS.primary },
+												]}
+												onPress={() => handleSwitchContent(index, contentIndex, 'Tak')}>
+												<Text
+													style={[
+														styles.stateButtonText,
+														switchValuesContent[index][contentIndex] === 'Tak' && { color: COLORS.white },
+													]}>
+													Tak
+												</Text>
+											</TouchableOpacity>
+											<TouchableOpacity
+												style={[
+													styles.stateButton,
+													switchValuesContent[index][contentIndex] === 'Nie' && { backgroundColor: COLORS.primary },
+												]}
+												onPress={() => handleSwitchContent(index, contentIndex, 'Nie')}>
+												<Text
+													style={[
+														styles.stateButtonText,
+														switchValuesContent[index][contentIndex] === 'Nie' && { color: COLORS.white },
+													]}>
+													Nie
+												</Text>
+											</TouchableOpacity>
+											<TouchableOpacity
+												style={[
+													styles.stateButton,
+													switchValuesContent[index][contentIndex] === 'Nie dotyczy' && {
+														backgroundColor: COLORS.primary,
+													},
+												]}
+												onPress={() => handleSwitchContent(index, contentIndex, 'Nie dotyczy')}>
+												<Text
+													style={[
+														styles.stateButtonText,
+														switchValuesContent[index][contentIndex] === 'Nie dotyczy' && { color: COLORS.white },
+														{ textAlign: 'center' }, // Added textAlign: 'center' style
+													]}>
+													Nie dotyczy
+												</Text>
+											</TouchableOpacity>
+										</View>
 									</View>
 								))}
 								<View>
